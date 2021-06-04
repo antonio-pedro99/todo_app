@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:my_daily_to_do/control.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() {
@@ -24,44 +25,128 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List _todo_list = [];
+  List _todoList = [];
   TextEditingController _controller = TextEditingController();
   Map<String, dynamic> _lastRemoved;
   int _lastIndex;
 
-  add_todo() {
+  // Method to add new todo to our file.
+
+  addNewTodo() {
     setState(() {
       var todo = Map();
       todo["name"] = _controller.text;
       todo["status"] = false;
       todo["time"] =
           "${DateTime.now().day.toString().padLeft(2, '0')} - ${DateTime.now().month.toString().padLeft(2, '0')} - ${DateTime.now().year.toString()}";
-      _todo_list.add(todo);
+      _todoList.add(todo);
       _controller.text = "";
-      _saveData();
+      Control.saveData(_todoList);
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _readFile().then((data) {
-      setState(() {
-        _todo_list = json.decode(data);
-      });
-    });
-  }
-
-  Future<Null> _getTodo() async {
+  // get organized todos
+  Future<Null> _getOrganizedTodo() async {
     await Future.delayed(Duration(seconds: 1));
     setState(() {
-      _todo_list.sort((a, b) {
+      _todoList.sort((a, b) {
         if (a["status"] && !b["status"])
           return 1;
         else if (!a["status"] && b["status"])
           return -1;
         else
           return 0;
+      });
+      Control.saveData(_todoList);
+    });
+  }
+
+  Container _buildTodoFoundWidget() {
+    return Container(
+        child: RefreshIndicator(
+      onRefresh: _getOrganizedTodo,
+      child: ListView.builder(
+          padding: EdgeInsets.symmetric(vertical: 10),
+          itemCount: _todoList.length,
+          itemBuilder: (context, index) {
+            return Dismissible(
+                key: Key(DateTime.now().microsecondsSinceEpoch.toString()),
+                background: Container(
+                  color: Colors.red,
+                  child: Align(
+                    alignment: Alignment(-0.9, 0.0),
+                    child: Icon(Icons.delete_forever, color: Colors.white),
+                  ),
+                ),
+                direction: DismissDirection.startToEnd,
+                onDismissed: (direction) {
+                  setState(() {
+                    _lastRemoved = Map.from(_todoList[index]);
+                    _lastIndex = index;
+                    _todoList.removeAt(index);
+                    Control.saveData(_todoList);
+
+                    final snackBar = SnackBar(
+                      content:
+                          Text("The task ${_lastRemoved["name"]} was deleted!"),
+                      action: SnackBarAction(
+                        label: "Undo",
+                        onPressed: () {
+                          setState(() {
+                            _todoList.insert(_lastIndex, _lastRemoved);
+                            Control.saveData(_todoList);
+                          });
+                        },
+                      ),
+                      duration: Duration(seconds: 2),
+                    );
+
+                    ScaffoldMessenger.maybeOf(context).showSnackBar(snackBar);
+                  });
+                },
+                child: CheckboxListTile(
+                    title: Text(_todoList[index]["name"]),
+                    subtitle: Text("Created at: ${_todoList[index]["time"]}"),
+                    secondary: CircleAvatar(
+                        child: Icon(
+                      _todoList[index]["status"] ? Icons.check : Icons.error,
+                      size: 40,
+                    )),
+                    value: _todoList[index]["status"],
+                    onChanged: (value) {
+                      setState(() {
+                        _todoList[index]["status"] = value;
+                        Control.saveData(_todoList);
+                      });
+                    }));
+          }),
+    ));
+  }
+
+  Center _buildNoTodoFoundWidget() {
+    return Center(
+        child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Image.asset(
+          "assets/empty.png",
+          height: 200,
+          width: 200,
+        ),
+        Text(
+          "Your list is empty",
+          style: TextStyle(color: Colors.blue, fontSize: 20),
+        )
+      ],
+    ));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Control.readFile().then((data) {
+      setState(() {
+        _todoList = json.decode(data);
       });
     });
   }
@@ -71,98 +156,13 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        actions: [
-          IconButton(
-              icon: Icon(
-                Icons.sort_by_alpha_rounded,
-                size: 25,
-              ),
-              onPressed: () {
-                setState(() {});
-              })
-        ],
       ),
-      body: _todo_list.length != 0
-          ? Container(
-              child: RefreshIndicator(
-              onRefresh: _getTodo,
-              child: ListView.builder(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  itemCount: _todo_list.length,
-                  itemBuilder: (context, index) {
-                    return Dismissible(
-                        key: Key(
-                            DateTime.now().microsecondsSinceEpoch.toString()),
-                        background: Container(
-                          color: Colors.red,
-                          child: Align(
-                            alignment: Alignment(-0.9, 0.0),
-                            child:
-                                Icon(Icons.delete_forever, color: Colors.white),
-                          ),
-                        ),
-                        direction: DismissDirection.startToEnd,
-                        onDismissed: (direction) {
-                          setState(() {
-                            _lastRemoved = Map.from(_todo_list[index]);
-                            _lastIndex = index;
-                            _todo_list.removeAt(index);
-                            _saveData();
 
-                            final snackBar = SnackBar(
-                              content: Text(
-                                  "The task ${_lastRemoved["name"]} was deleted!"),
-                              action: SnackBarAction(
-                                label: "Undo",
-                                onPressed: () {
-                                  setState(() {
-                                    _todo_list.insert(_lastIndex, _lastRemoved);
-                                    _saveData();
-                                  });
-                                },
-                              ),
-                              duration: Duration(seconds: 2),
-                            );
+      //if list is not empty show the todos, otherwise show noTodoFound
+      body: _todoList.length != 0
+          ? _buildTodoFoundWidget()
+          : _buildNoTodoFoundWidget(),
 
-                            ScaffoldMessenger.maybeOf(context)
-                                .showSnackBar(snackBar);
-                          });
-                        },
-                        child: CheckboxListTile(
-                            title: Text(_todo_list[index]["name"]),
-                            subtitle: Text(
-                                "Created at: ${_todo_list[index]["time"]}"),
-                            secondary: CircleAvatar(
-                                child: Icon(
-                              _todo_list[index]["status"]
-                                  ? Icons.check
-                                  : Icons.error,
-                              size: 40,
-                            )),
-                            value: _todo_list[index]["status"],
-                            onChanged: (value) {
-                              setState(() {
-                                _todo_list[index]["status"] = value;
-                                _saveData();
-                              });
-                            }));
-                  }),
-            ))
-          : Center(
-              child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  "assets/empty.png",
-                  height: 200,
-                  width: 200,
-                ),
-                Text(
-                  "Your list is empty",
-                  style: TextStyle(color: Colors.blue, fontSize: 20),
-                )
-              ],
-            )),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.blue,
         tooltip: "Add new To do",
@@ -202,7 +202,7 @@ class _HomePageState extends State<HomePage> {
                                 (states) => Colors.green),
                           ),
                           onPressed: () {
-                            add_todo();
+                            addNewTodo();
                           },
                           child: Text("Add now")),
                     ],
@@ -212,27 +212,5 @@ class _HomePageState extends State<HomePage> {
         },
       ),
     );
-  }
-
-  Future<File> _getFile() async {
-    final directory = await getApplicationDocumentsDirectory();
-
-    return File("${directory.path}/data.json");
-  }
-
-  Future<File> _saveData() async {
-    String content = json.encode(_todo_list);
-    final file = await _getFile();
-
-    return file.writeAsString(content);
-  }
-
-  Future<String> _readFile() async {
-    try {
-      final file = await _getFile();
-      return file.readAsString();
-    } catch (e) {
-      return null;
-    }
   }
 }
