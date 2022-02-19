@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:my_daily_to_do/model/Category.dart';
 
 import '../../control.dart';
-import '../CategoryTile.dart';
+import '../components/CategoryTile.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key}) : super(key: key);
@@ -59,40 +59,46 @@ class _HomePageState extends State<HomePage> {
           itemCount: _todoList.length,
           itemBuilder: (context, index) {
             return Dismissible(
-                key: Key(DateTime.now().microsecondsSinceEpoch.toString()),
-                background: Container(
-                  color: Colors.red,
-                  child: Align(
-                    alignment: Alignment(-0.9, 0.0),
-                    child: Icon(Icons.delete_forever, color: Colors.white),
-                  ),
+              key: Key(DateTime.now().microsecondsSinceEpoch.toString()),
+              background: Container(
+                color: Colors.red,
+                child: Align(
+                  alignment: Alignment(-0.9, 0.0),
+                  child: Icon(Icons.delete_forever, color: Colors.white),
                 ),
-                direction: DismissDirection.startToEnd,
-                onDismissed: (direction) {
-                  setState(() {
-                    _lastRemoved = Map.from(_todoList[index]);
-                    _lastIndex = index;
-                    _todoList.removeAt(index);
-                    Control.saveData(_todoList);
+              ),
+              direction: DismissDirection.startToEnd,
+              onDismissed: (direction) {
+                setState(() {
+                  _lastRemoved = Map.from(_todoList[index]);
+                  _lastIndex = index;
+                  _todoList.removeAt(index);
+                  Control.saveData(_todoList);
 
-                    final snackBar = SnackBar(
-                      content:
-                          Text("The task ${_lastRemoved["name"]} was deleted!"),
-                      action: SnackBarAction(
-                        label: "Undo",
-                        onPressed: () {
-                          setState(() {
-                            _todoList.insert(_lastIndex, _lastRemoved);
-                            Control.saveData(_todoList);
-                          });
-                        },
-                      ),
-                      duration: Duration(seconds: 2),
-                    );
+                  final snackBar = SnackBar(
+                    content:
+                        Text("The task ${_lastRemoved["name"]} was deleted!"),
+                    action: SnackBarAction(
+                      label: "Undo",
+                      onPressed: () {
+                        setState(() {
+                          _todoList.insert(_lastIndex, _lastRemoved);
+                          Control.saveData(_todoList);
+                        });
+                      },
+                    ),
+                    duration: Duration(seconds: 2),
+                  );
 
-                    ScaffoldMessenger.maybeOf(context).showSnackBar(snackBar);
-                  });
-                },
+                  ScaffoldMessenger.maybeOf(context).showSnackBar(snackBar);
+                });
+              },
+              child: Card(
+                //elevation: ,
+                borderOnForeground: false,
+                shadowColor: Colors.blue.shade50,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(20))),
                 child: CheckboxListTile(
                     title: Text(_todoList[index]["name"]),
                     subtitle: Text("Created at: ${_todoList[index]["time"]}"),
@@ -107,7 +113,9 @@ class _HomePageState extends State<HomePage> {
                         _todoList[index]["status"] = value;
                         Control.saveData(_todoList);
                       });
-                    }));
+                    }),
+              ),
+            );
           }),
     ));
   }

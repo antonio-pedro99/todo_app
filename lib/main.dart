@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:my_daily_to_do/view/MenuItem.dart';
+import 'package:my_daily_to_do/view/components/MenuItem.dart';
 import 'package:my_daily_to_do/view/pages/home.dart';
 
 void main() {
