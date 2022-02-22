@@ -15,12 +15,13 @@ class CategoryTile extends StatelessWidget {
             borderRadius: BorderRadius.all(Radius.circular(20))),
         child: Container(
             padding: EdgeInsets.all(12),
-            width: 160,
+            width: 180,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Text("${category.tasks} tasks", style: TextStyle(color: Colors.black38)),
+                Text("${category.tasks} tasks",
+                    style: TextStyle(color: Colors.black38)),
                 Text(
                   "${category.name}",
                   style: TextStyle(

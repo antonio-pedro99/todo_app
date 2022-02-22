@@ -10,7 +10,7 @@ A sample To do app made with Flutter.  It just make some operations like: add an
 # Show case
 1. Open the app
 
-![Screenshot_20210604-120053](https://user-images.githubusercontent.com/42675180/120792665-c7219880-c52d-11eb-9129-1754756cfcba.png)
+![Screenshot_20210604-120053](https://user-images.githubusercontent.com/42675180/120792665-c7219880-c52d-11eb-9129-1754756cfcba.png) 
 
 2. Add new todo
 

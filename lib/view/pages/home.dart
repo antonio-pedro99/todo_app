@@ -18,6 +18,10 @@ class _HomePageState extends State<HomePage> {
   TextEditingController _controller = TextEditingController();
   Map<String, dynamic> _lastRemoved;
   int _lastIndex;
+  List<Category> categories = [
+    Category(name: "Business", tasks: 0),
+    Category(name: "College", tasks: 0)
+  ];
 
   // Method to add new todo to our file.
 
@@ -100,13 +104,17 @@ class _HomePageState extends State<HomePage> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(20))),
                 child: CheckboxListTile(
-                    title: Text(_todoList[index]["name"]),
-                    subtitle: Text("Created at: ${_todoList[index]["time"]}"),
-                    secondary: CircleAvatar(
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(
+                      _todoList[index]["name"],
+                      style: TextStyle(),
+                    ),
+                    subtitle: Text("Created on: ${_todoList[index]["time"]}"),
+                    /*  secondary: CircleAvatar(
                         child: Icon(
                       _todoList[index]["status"] ? Icons.check : Icons.error,
                       size: 40,
-                    )),
+                    )), */
                     value: _todoList[index]["status"],
                     onChanged: (value) {
                       setState(() {
@@ -151,9 +159,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
-    List<Category> categories = [];
-    categories.add(Category(name: "Business", tasks: 0));
-    categories.add(Category(name: "University", tasks: 0));
+
     return Scaffold(
 //if list is not empty show the todos, otherwise show noTodoFound
       body: CustomScrollView(
@@ -165,14 +171,14 @@ class _HomePageState extends State<HomePage> {
             stretch: true,
             elevation: 0,
             backgroundColor: Colors.white,
-            leading: IconButton(
+            /*  leading: IconButton(
               icon: Icon(
                 Icons.menu,
                 color: Colors.grey,
                 size: 25,
               ),
               onPressed: () {},
-            ),
+            ), */
             actions: [
               IconButton(
                   onPressed: () {},
@@ -221,6 +227,7 @@ class _HomePageState extends State<HomePage> {
                   Container(
                       height: 110,
                       child: ListView.builder(
+                          shrinkWrap: true,
                           itemCount: categories.length,
                           scrollDirection: Axis.horizontal,
                           itemBuilder: (context, index) {
@@ -267,35 +274,108 @@ class _HomePageState extends State<HomePage> {
             showDialog(
                 context: context,
                 builder: (BuildContext context) {
+                  Category selectedCategory = categories[0];
                   return AlertDialog(
-                    title: Center(
-                        child: Text(
-                      "Add new to do",
-                      style: TextStyle(color: Colors.blue),
-                    )),
+                    title: Align(
+                      alignment: Alignment.topRight,
+                      child: Container(
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.grey.shade300)),
+                        child: IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: Icon(
+                            Icons.close,
+                            color: Colors.grey,
+                          ),
+                          alignment: Alignment.center,
+                        ),
+                      ),
+                    ),
                     content: Container(
-                      height: 50,
+                      height: 130,
                       child: Column(
                         children: [
                           TextField(
                             controller: _controller,
-                            textAlign: TextAlign.center,
+                            textAlign: TextAlign.start,
                             decoration: InputDecoration(
+                                border: InputBorder.none,
+                                hintStyle: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.w300),
                                 hintText: "Type the activity's name"),
                           ),
+                          SizedBox(
+                            height: 30,
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                height: 10,
+                              ),
+                              Text(
+                                "Category: ",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey),
+                              ),
+                              SizedBox(
+                                height: 20,
+                                width: 10,
+                              ),
+                              Container(
+                                height: 10,
+                                alignment: Alignment.topCenter,
+                                child: DropdownButton<Category>(
+                                    elevation: 3,
+                                    //isExpanded: true,
+                                    alignment: Alignment.topCenter,
+                                    value: selectedCategory,
+                                    items: categories
+                                        .map<DropdownMenuItem<Category>>((e) {
+                                      return DropdownMenuItem<Category>(
+                                          alignment: Alignment.center,
+                                          value: e,
+                                          child: Text(e.name));
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedCategory = value;
+                                      });
+                                    }),
+                              )
+                            ],
+                          )
                         ],
                       ),
                     ),
                     actions: [
-                      ElevatedButton(
-                          style: ButtonStyle(
-                            backgroundColor: MaterialStateColor.resolveWith(
-                                (states) => Colors.green),
-                          ),
-                          onPressed: () {
-                            addNewTodo();
-                          },
-                          child: Text("Add now")),
+                      Center(
+                          child: ElevatedButton(
+                              style: TextButton.styleFrom(
+                                fixedSize: Size(100, 50),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(25))),
+                                backgroundColor: MaterialStateColor.resolveWith(
+                                    (states) => Colors.blue),
+                              ),
+                              onPressed: () {
+                                if (_controller.text.length > 0 &&
+                                    _controller.text != "") {
+                                  addNewTodo();
+                                  Navigator.pop(context);
+                                }
+                              },
+                              child: Center(
+                                child: Text("New task",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.normal)),
+                              ))),
                     ],
                   );
                 });
