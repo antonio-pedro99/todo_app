@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:my_daily_to_do/view/components/MenuItem.dart';
 import 'package:my_daily_to_do/view/pages/home.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final database = openDatabase(join(await getDatabasesPath(), "todos.db"));
+
+  
   runApp(MaterialApp(
     title: "Daily To Do",
     debugShowCheckedModeBanner: false,
@@ -43,4 +50,3 @@ class MenuPage extends StatelessWidget {
                 ))));
   }
 }
-
